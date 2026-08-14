@@ -6,7 +6,9 @@ on:
       version:
         description: 'Version number (e.g. v1.0.1)'
         required: true
-
+permissions:
+  contents: write
+  
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
