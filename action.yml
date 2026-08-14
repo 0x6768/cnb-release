@@ -59,18 +59,5 @@ outputs:
     description: 'List of uploaded asset names'
 
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
-  args:
-    - ${{ inputs.token }}
-    - ${{ inputs.repo }}
-    - ${{ inputs.tag_name }}
-    - ${{ inputs.target_commitish }}
-    - ${{ inputs.release_name }}
-    - ${{ inputs.body }}
-    - ${{ inputs.draft }}
-    - ${{ inputs.prerelease }}
-    - ${{ inputs.make_latest }}
-    - ${{ inputs.file_path }}
-    - ${{ inputs.overwrite }}
-    - ${{ inputs.ttl }}
+  using: 'node22'
+  main: 'index.js'
