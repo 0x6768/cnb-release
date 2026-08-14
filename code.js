@@ -123,7 +123,7 @@ async function uploadFile(uploadUrl, filePath) {
   }
 }
 
-async function confirmUpload(verifyUrl) {
+async function confirmUpload(verifyUrl, token) {
   const url = new URL(verifyUrl);
 
   const options = {
@@ -131,6 +131,7 @@ async function confirmUpload(verifyUrl) {
     path: url.pathname + url.search,
     method: 'POST',
     headers: {
+      'Authorization': `Bearer ${token}`,
       'Accept': CNB_ACCEPT
     }
   };
@@ -202,7 +203,7 @@ async function run() {
       await uploadFile(uploadUrl, file);
       log(`Uploaded: ${assetName}`);
 
-      await confirmUpload(verifyUrl);
+      await confirmUpload(verifyUrl, token);
       log(`Confirmed: ${assetName}`);
 
       uploadedAssets.push(assetName);
