@@ -1,0 +1,43 @@
+name: Demo - Generate Random String and Upload
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: 'Repository name in org/repo format'
+        required: true
+      tag_name:
+        description: 'Tag name for the release'
+        required: true
+        default: 'demo-v1.0.0'
+      release_name:
+        description: 'Release title'
+        required: false
+        default: 'Demo Release'
+
+jobs:
+  generate-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate exact 512 random bytes as text
+        run: |
+          # Use /dev/urandom to generate random bytes, filter to alphanumeric
+          tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 512 > random_data.txt
+          echo "Generated 512 random characters"
+          echo "Preview: $(head -c 60 random_data.txt)"
+
+      - name: Verify file
+        run: |
+          echo "File size: $(wc -c < random_data.txt) bytes"
+
+      - name: Upload to CNB Release
+        uses: 0x6768/cnb-release@v1
+        with:
+          token: ${{ secrets.CNB_TOKEN }}
+          repo: ${{ github.event.inputs.repo }}
+          tag_name: ${{ github.event.inputs.tag_name }}
+          release_name: ${{ github.event.inputs.release_name }}
+          body: "Demo release with randomly generated 512-byte file"
+          file_path: ./random_data.txt
+          overwrite: 'true'
+          ttl: '0'
