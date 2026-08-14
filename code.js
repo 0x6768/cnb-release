@@ -1,7 +1,11 @@
-const core = require('@actions/core');
-const fs = require('fs');
-const path = require('path');
-const https = require('https');
+import * as core from '@actions/core';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as https from 'https';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const API_BASE = 'https://api.cnb.cool';
 const CNB_ACCEPT = 'application/vnd.cnb.api+json';
@@ -39,7 +43,7 @@ async function createRelease(token, repo, tagName, targetCommitish, releaseName,
 
   const payload = JSON.stringify({
     tag_name: tagName,
-    target_commit, targetCommitish,
+    target_commitish: targetCommitish,
     name: releaseName || tagName,
     body: body,
     draft: draft === 'true',
