@@ -1,0 +1,10 @@
+{
+  "name": "cnb-release",
+  "version": "1.0.0",
+  "description": "Create a release and upload assets to CNB platform",
+  "main": "index.js",
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^6.0.0"
+  }
+}
