@@ -4,6 +4,7 @@ const path = require('path');
 const https = require('https');
 
 const API_BASE = 'https://api.cnb.cool';
+const CNB_ACCEPT = 'application/vnd.cnb.api+json';
 
 function log(message) {
   console.log(`[CNB Release] ${message}`);
@@ -35,10 +36,10 @@ function httpsRequest(options, data = null) {
 
 async function createRelease(token, repo, tagName, targetCommitish, releaseName, body, draft, prerelease, makeLatest) {
   log(`Creating release with tag: ${tagName}`);
-  
+
   const payload = JSON.stringify({
     tag_name: tagName,
-    target_commitish: targetCommitish,
+    target_commit, targetCommitish,
     name: releaseName || tagName,
     body: body,
     draft: draft === 'true',
@@ -53,12 +54,13 @@ async function createRelease(token, repo, tagName, targetCommitish, releaseName,
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
+      'Accept': CNB_ACCEPT,
       'Content-Length': Buffer.byteLength(payload)
     }
   };
 
   const response = await httpsRequest(options, payload);
-  
+
   if (response.status !== 201) {
     errorExit(`Failed to create release: ${response.data.errmsg || JSON.stringify(response.data)}`);
   }
@@ -82,12 +84,13 @@ async function getUploadUrl(token, repo, releaseId, assetName, fileSize, overwri
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
+      'Accept': CNB_ACCEPT,
       'Content-Length': Buffer.byteLength(payload)
     }
   };
 
   const response = await httpsRequest(options, payload);
-  
+
   if (!response.data.upload_url) {
     errorExit(`Failed to get upload URL for ${assetName}: ${response.data.errmsg || JSON.stringify(response.data)}`);
   }
@@ -110,7 +113,7 @@ async function uploadFile(uploadUrl, filePath) {
   };
 
   const response = await httpsRequest(options, fileContent);
-  
+
   if (response.status !== 200 && response.status !== 201) {
     errorExit(`Failed to upload file: HTTP ${response.status}`);
   }
@@ -122,12 +125,15 @@ async function confirmUpload(verifyUrl) {
   const options = {
     hostname: url.hostname,
     path: url.pathname + url.search,
-    method: 'POST'
+    method: 'POST',
+    headers: {
+      'Accept': CNB_ACCEPT
+    }
   };
 
   const response = await httpsRequest(options);
-  
-  if (response.data.errcode && response.data.errcode !== 0) {
+
+  if (response.data && response.data.errcode && response.data.errcode !== 0) {
     errorExit(`Failed to confirm upload: ${response.data.errmsg}`);
   }
 }
@@ -135,7 +141,7 @@ async function confirmUpload(verifyUrl) {
 function collectFiles(filePath) {
   const files = [];
   const stat = fs.statSync(filePath);
-  
+
   if (stat.isFile()) {
     files.push(filePath);
   } else if (stat.isDirectory()) {
@@ -149,7 +155,7 @@ function collectFiles(filePath) {
   } else {
     errorExit(`Path is neither file nor directory: ${filePath}`);
   }
-  
+
   return files;
 }
 
@@ -168,36 +174,30 @@ async function run() {
     const overwrite = core.getInput('overwrite') || 'true';
     const ttl = core.getInput('ttl') || '0';
 
-    // Step 1: Create release
     const releaseId = await createRelease(
       token, repo, tagName, targetCommitish,
       releaseName, body, draft, prerelease, makeLatest
     );
     core.setOutput('release_id', releaseId);
 
-    // Step 2: Collect files
     const files = collectFiles(filePath);
     log(`Found ${files.length} file(s) to upload`);
 
     const uploadedAssets = [];
 
-    // Step 3-5: Upload each file
     for (const file of files) {
       const assetName = path.basename(file);
       const fileSize = fs.statSync(file).size;
 
       log(`Processing: ${assetName} (${fileSize} bytes)`);
 
-      // Get upload URL
       const { uploadUrl, verifyUrl } = await getUploadUrl(
         token, repo, releaseId, assetName, fileSize, overwrite, ttl
       );
 
-      // Upload file
       await uploadFile(uploadUrl, file);
       log(`Uploaded: ${assetName}`);
 
-      // Confirm upload
       await confirmUpload(verifyUrl);
       log(`Confirmed: ${assetName}`);
 
