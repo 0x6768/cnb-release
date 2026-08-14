@@ -1,0 +1,76 @@
+name: 'CNB Release'
+description: 'Create a release and upload assets to CNB platform'
+author: '0x6768'
+
+branding:
+  icon: 'package'
+  color: 'blue'
+
+inputs:
+  token:
+    description: 'CNB access token with repo-release:rw permission'
+    required: true
+  repo:
+    description: 'Repository name in org/repo format'
+    required: true
+  tag_name:
+    description: 'Tag name for the release'
+    required: true
+  target_commitish:
+    description: 'Branch name or commit SHA'
+    required: false
+    default: 'main'
+  release_name:
+    description: 'Release title'
+    required: false
+    default: ''
+  body:
+    description: 'Release description'
+    required: false
+    default: ''
+  draft:
+    description: 'Mark as draft release'
+    required: false
+    default: 'false'
+  prerelease:
+    description: 'Mark as pre-release'
+    required: false
+    default: 'false'
+  make_latest:
+    description: 'Set as latest release'
+    required: false
+    default: 'true'
+  file_path:
+    description: 'File or directory path to upload'
+    required: true
+  overwrite:
+    description: 'Overwrite existing assets with same name'
+    required: false
+    default: 'true'
+  ttl:
+    description: 'Asset retention days, 0 means permanent'
+    required: false
+    default: '0'
+
+outputs:
+  release_id:
+    description: 'Created release ID'
+  uploaded_assets:
+    description: 'List of uploaded asset names'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.token }}
+    - ${{ inputs.repo }}
+    - ${{ inputs.tag_name }}
+    - ${{ inputs.target_commitish }}
+    - ${{ inputs.release_name }}
+    - ${{ inputs.body }}
+    - ${{ inputs.draft }}
+    - ${{ inputs.prerelease }}
+    - ${{ inputs.make_latest }}
+    - ${{ inputs.file_path }}
+    - ${{ inputs.overwrite }}
+    - ${{ inputs.ttl }}
